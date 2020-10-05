@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phonebook</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div id="app">
+    <div class="container">
+      <!-- ASIDE -->
+      <div class="aside">
+
+        <div class="contacts">
+
+          <div class="contacts-head">
+
+            <h3 class="contacts-head__title">Contactos</h3>
+            <button class="btn btn-rounded" title="Add Contact" @click="addContact">
+              <img class="btn btn-rounded__icon" src="icons/plus.svg" alt="Add Contact">
+            </button>
+
+          </div>
+
+          <ul class="list contacts-list" v-if="selectedContact">
+
+            <li v-for="(contact, contactIndex) in contacts" class="contacts-list__item"
+              :class="{ 'contacts-list__item--active': selectedContactIndex === contactIndex }"
+              @click="setSelectedContactIndex(contactIndex)">
+              <img src="icons/user.svg" alt="Contact Icon" class="contacts-list__icon">
+              <span class="contacts-list__title">{{ contact.name + ' ' + contact.surnames }}</span>
+            </li>
+
+          </ul>
+
+          <small class="contacts-message" v-else>No hay Contactos Registrados</small>
+
+        </div>
+
+      </div>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <div class="detail-contact">
+
+          <div class="bg-linear--blue detail-contact-head">
+
+            <div class="selected-contact">
+
+              <div class="selected-contact__heading">
+
+                <img src="icons/user.svg" alt="Contact Icon" class="selected-contact__icon" v-if="selectedContact">
+                <div class="selected-contact__title">
+                  <h3>{{ selectedContactFullName }}</h3>
+                  <small>{{ selectedContactProfessionalInformation }}</small>
+                </div>
+
+              </div>
+
+              <div class="selected-contact__actions" v-if="selectedContact">
+
+                <button class="btn btn-rounded selected-contact__action" @click="toggleFavorite">
+                  <img class="btn btn-rounded__icon" :src="'icons/' + imageFavorite" alt="Favorite">
+                </button>
+                <button class="btn btn-rounded selected-contact__action" @click="editContact">
+                  <img class="btn btn-rounded__icon" src="icons/edit.svg" alt="Edit">
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div class="detail-contact-content" v-if="selectedContact">
+
+            <div class="contact-info" v-for="phone in selectedContact.phones">
+              <span class="contact-info__item">{{ phone.number }}</span>
+              <small class="contact-info__type">{{ phone.type }}</small>
+            </div>
+
+            <div class="contact-info" v-for="email in selectedContact.emails">
+              <span class="contact-info__item">{{ email.value }}</span>
+              <small class="contact-info__type">{{ email.type }}</small>
+            </div>
+
+            <div class="contact-info" v-for="group in activeGroups">
+              <span class="contact-info__item">{{ group }}</span>
+              <small class="contact-info__type">Group</small>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- MODAL -->
+      <div class="modal" v-show="isOpen">
+
+        <div class="modal__head">
+
+          <button class="btn btn-rounded modal__close" @click="closeModal">
+            <img class="btn btn-rounded__icon" src="icons/close.svg" alt="close modal">
+          </button>
+          <h3 class="modal__title">{{ action === 'add' ? 'Add' : 'Edit' }} Contact</h3>
+
+        </div>
+
+        <div class="modal__body">
+
+          <form class="form-contact" @submit.prevent="saveContact">
+
+            <input class="input form-contact__input" type="text" placeholder="Names" v-model="contact.name"
+              required="true">
+            <input class="input form-contact__input" type="text" placeholder="Surnames" v-model="contact.surnames">
+            <input class="input form-contact__input" type="text" placeholder="Company" v-model="contact.company">
+            <input class="input form-contact__input" type="text" placeholder="Title" v-model="contact.title">
+
+            <div>
+              <button class="btn btn-outlined" @click.prevent="addPhone">Add Phone</button>
+            </div>
+
+
+            <div class="form-contact__data" v-for="(phone, indexPhone) in contact.phones">
+
+              <select class="select form-contact__select--small" v-model="phone.type">
+                <option v-for="phoneType in phoneTypes">{{ phoneType }}</option>
+              </select>
+              <input class="input form-contact__input--small" type="tel" placeholder="Phone" v-model="phone.number"
+                required="true">
+              <button class="btn btn-square form-contact__delete" @click.prevent="deletePhone(indexPhone)">
+                <img class="btn-square__icon" src="icons/close.svg" alt="Delete Phone">
+              </button>
+
+            </div>
+
+            <div>
+              <button class="btn btn-outlined" @click.prevent="addEmail">Add Email</button>
+            </div>
+
+            <div class="form-contact__data" v-for="(email, indexEmail) in contact.emails">
+
+              <select class="select form-contact__select--small" v-model="email.type">
+                <option v-for="emailType in emailTypes">{{ emailType }}</option>
+              </select>
+              <input class="input form-contact__input--small" type="email" placeholder="Email" v-model="email.value"
+                required="true">
+              <button class="btn btn-square form-contact__delete" @click.prevent="deleteEmail(indexEmail)">
+                <img class="btn-square__icon" src="icons/close.svg" alt="Delete Email">
+              </button>
+
+            </div>
+
+            <div class="form-contact__groups">
+
+              <div class="form-contact__group" v-for="(group, index) in groups">
+                <input class="input form-contact__input--radio" type="checkbox" :id="index"
+                  v-model="contact.groups[group]">
+                <label class="form-contact__label" :for="index">{{ group }}</label>
+              </div>
+
+            </div>
+
+            <div>
+              <input class="btn btn-contained" type="submit" value="Save" required="true">
+            </div>
+
+          </form>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="js/main.js"></script>
+</body>
+
+</html>
